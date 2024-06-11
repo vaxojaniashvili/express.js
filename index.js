@@ -1,61 +1,28 @@
+// filter by price
+
 // import express from "express";
 // import { port } from "./constants/common.js";
+// import url from "url";
+// import querystring from "querystring";
 
 // const app = express();
-// app.use(express.json());
-
-// const users = [
-//   { id: 1, name: "nika", email: "nika@gmail.com" },
-//   { id: 2, name: "saba", email: "saba@gmail.com" },
-//   { id: 3, name: "david", email: "david@gmail.com" },
-// ];
 
 // app.get("/api/users", (req, res) => {
-//   if (!users | (users.length === 0)) {
-//     return res
-//       .status(404)
-//       .json({ message: "user not found", success: false, data: null });
-//   } else {
-//     res.json({ success: true, data: users });
-//   }
-// });
-
-// app.get("/api/users/:id", (req, res) => {
-//   const userId = parseInt(req.params.id);
-//   const user = users.find((i) => i.id === userId);
-//   if (!user) {
-//     return res
-//       .status(404)
-//       .json({ message: "user not found", success: false, data: null });
-//   } else {
-//     res.json({ success: true, data: user });
-//   }
-// });
-
-// app.post("/api/auth/signup", (req, res) => {
-//   const newUser = req.body;
-//   const id = users.length + 1;
-//   const newObjectUsers = { id, ...newUser };
-//   users.push(newObjectUsers);
-//   if (!users) {
-//     return res
-//       .status(404)
-//       .json({ message: "user not found", success: false, data: null });
-//   } else {
-//     res.json({ success: true, data: users });
-//   }
-// });
-
-// app.put("/api/users/update", (req, res) => {
-//   const updatedUser = req.body;
-//   const userId = updatedUser.id;
-//   const indexUser = users.findIndex((u) => u.id === userId);
-//   if (!userId) {
-//     return res.status(404).json({ message: "error", data: null });
-//   } else {
-//     users[indexUser] = updatedUser;
-//     res.json({ success: true, data: users });
-//   }
+//   const parsedUrl = url.parse(req.url);
+//   const parsedQuery = querystring.parse(parsedUrl.query);
+//   const price = parseInt(parsedQuery.price);
+//   fetch("https://fakestoreapi.com/products")
+//     .then((res) => res.json())
+//     .then((data) => {
+//       if (!data) {
+//         res
+//           .status(404)
+//           .json({ success: false, message: "user not found", data: null });
+//       } else {
+//         const filteredData = data.filter((item) => item.price < price);
+//         res.json({ success: true, data: filteredData });
+//       }
+//     });
 // });
 
 // app.listen(port, () => {
@@ -64,27 +31,87 @@
 
 import express from "express";
 import { port } from "./constants/common.js";
-import url from "url";
-import querystring from "querystring";
 
 const app = express();
+app.use(express.json());
+
+const users = [
+  { id: 1, name: "John Doe", email: "john@example.com", date: "" },
+];
 
 app.get("/api/users", (req, res) => {
-  const parsedUrl = url.parse(req.url);
-  const parsedQuery = querystring.parse(parsedUrl.query);
-  const price = parseInt(parsedQuery.price);
-  fetch("https://fakestoreapi.com/products")
-    .then((res) => res.json())
-    .then((data) => {
-      if (!data) {
-        res
-          .status(404)
-          .json({ success: false, message: "user not found", data: null });
-      } else {
-        const filteredData = data.filter((item) => item.price < price);
-        res.json({ success: true, data: filteredData });
-      }
-    });
+  if (!users | (users.length < 1)) {
+    res
+      .status(404)
+      .send({ success: false, message: "Users not found", data: null });
+  } else {
+    res.send({ success: true, data: users });
+  }
+});
+
+app.get("/api/users/:id", (req, res) => {
+  const {
+    params: { id },
+  } = req;
+  const findUser = users.find((u) => u.id === parseInt(id));
+  if (!findUser) {
+    res
+      .status(404)
+      .send({ success: false, message: "User not found ", data: null });
+  } else {
+    res.status(200).send({ success: true, data: findUser });
+  }
+});
+
+app.post("/api/users", (req, res) => {
+  const { body } = req;
+  const newUserObject = body;
+  const id = users.length + 1;
+  const date = new Date().toLocaleString();
+  const newUser = { id, ...newUserObject, date };
+  users.push(newUser);
+  if (!users | (users.length < 1)) {
+    res.status(400).send("Bad request!!!");
+  } else {
+    res.status(201).send({ success: true, data: users });
+  }
+});
+
+app.put("/api/users", (req, res) => {
+  const { body } = req;
+  const { id } = body;
+  const findUserIndex = users.findIndex((user) => user.id === id);
+  if (findUserIndex === -1) {
+    res.status(400).send("Bad request!!");
+  } else {
+    const updatedUser = { id, ...body };
+    users[findUserIndex] = updatedUser;
+    res.status(200).send({ success: true, data: users });
+  }
+});
+
+app.patch("/api/users", (req, res) => {
+  const { body } = req;
+  const { id } = body;
+  const findIndex = users.findIndex((user) => user.id === parseInt(id));
+  if ((findIndex === 1) | isNaN(id)) {
+    res.status(400).send("Bad request!!");
+  } else {
+    users[findIndex] = { ...users[findIndex], ...body };
+    res.status(200).send({ success: true, data: users });
+  }
+});
+
+app.delete("/api/users", (req, res) => {
+  const { body } = req;
+  const { id } = body;
+  const findIndex = users.findIndex((user) => user.id === parseInt(id));
+  if (findIndex === -1) {
+    res.status(400).send("Bad request!!!");
+  } else {
+    users.splice(findIndex, 1);
+    res.status(200).send({ message: "User is successfully deleted" });
+  }
 });
 
 app.listen(port, () => {
