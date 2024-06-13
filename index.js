@@ -53,11 +53,11 @@ app.get("/api/users/:id", (req, res) => {
   const {
     params: { id },
   } = req;
-  const findUser = users.find((u) => u.id === parseInt(id));
+  const findUser = users.find((user) => user.id === parseInt(id));
   if (!findUser) {
     res
       .status(404)
-      .send({ success: false, message: "User not found ", data: null });
+      .send({ success: false, message: "User not found", data: null });
   } else {
     res.status(200).send({ success: true, data: findUser });
   }
@@ -66,26 +66,37 @@ app.get("/api/users/:id", (req, res) => {
 app.post("/api/users", (req, res) => {
   const { body } = req;
   const newUserObject = body;
-  const id = users.length + 1;
-  const date = new Date().toLocaleString();
-  const newUser = { id, ...newUserObject, date };
-  users.push(newUser);
-  if (!users | (users.length < 1)) {
-    res.status(400).send("Bad request!!!");
+  const id = parseInt(users.length + 1);
+  if (typeof id === NaN) {
+    res
+      .status(400)
+      .send({ success: false, message: "Number type must be number" });
   } else {
-    res.status(201).send({ success: true, data: users });
+    const userPostTime = new Date().toLocaleString();
+    const newUser = { id, ...newUserObject, userPostTime };
+    if (!newUser) {
+      res
+        .status(400)
+        .send({ success: false, message: "User not found", data: null });
+    } else {
+      users.push(newUser);
+      res.status(200).send({ success: true, data: users });
+    }
   }
 });
 
 app.put("/api/users", (req, res) => {
   const { body } = req;
   const { id } = body;
-  const findUserIndex = users.findIndex((user) => user.id === id);
-  if (findUserIndex === -1) {
-    res.status(400).send("Bad request!!");
+  const findUser = users.findIndex((user) => user.id === id);
+  if (findUser === -1) {
+    res
+      .status(404)
+      .send({ success: false, message: "User not found", data: null });
   } else {
-    const updatedUser = { id, ...body };
-    users[findUserIndex] = updatedUser;
+    const updatedUserTime = new Date().toLocaleString();
+    const updatedUser = { id, ...body, updatedUserTime };
+    users[findUser] = updatedUser;
     res.status(200).send({ success: true, data: users });
   }
 });
@@ -93,11 +104,13 @@ app.put("/api/users", (req, res) => {
 app.patch("/api/users", (req, res) => {
   const { body } = req;
   const { id } = body;
-  const findIndex = users.findIndex((user) => user.id === parseInt(id));
-  if ((findIndex === 1) | isNaN(id)) {
-    res.status(400).send("Bad request!!");
+  const findUser = users.findIndex((user) => user.id === parseInt(id));
+  if (findUser === -1) {
+    res
+      .status(400)
+      .send({ success: false, message: "User not found", data: null });
   } else {
-    users[findIndex] = { ...users[findIndex], ...body };
+    users[findUser] = { ...users[findUser], ...body };
     res.status(200).send({ success: true, data: users });
   }
 });
@@ -105,12 +118,18 @@ app.patch("/api/users", (req, res) => {
 app.delete("/api/users", (req, res) => {
   const { body } = req;
   const { id } = body;
-  const findIndex = users.findIndex((user) => user.id === parseInt(id));
-  if (findIndex === -1) {
-    res.status(400).send("Bad request!!!");
+  const findUser = users.findIndex((user) => user.id === parseInt(id));
+  if (findUser === -1) {
+    res.status(200).send({ success: false, message: "User not found" });
   } else {
-    users.splice(findIndex, 1);
-    res.status(200).send({ message: "User is successfully deleted" });
+    users.splice(findUser, 1);
+    res
+      .status(200)
+      .send({
+        success: true,
+        message: "user successfully deleted",
+        data: users,
+      });
   }
 });
 
